@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#181818">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Мессенджер</title>
+<style>
+:root{--bg:#181818;--ink:#fff;--soft:#9b9b9b;--line:#454545;--card:#212121;--acc:#4B78F0;--focus:#8C9BEA;--err:#FF7B72;--bub:#2A2A2A}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:Roboto,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;margin:0}
+button:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.app{max-width:520px;margin:0 auto;height:100dvh}
+.screen{display:none}
+.screen.on{display:flex;flex-direction:column;height:100%}
+/* вход */
+.auth{padding:0 24px max(24px,env(safe-area-inset-bottom))}
+.bar{height:64px;flex:none;display:flex;align-items:center;margin:0 -12px;padding-top:env(safe-area-inset-top)}
+.ic{font-size:26px;padding:8px 14px;line-height:1}
+.main{flex:1;overflow-y:auto;padding-top:5vh}
+h1{font-size:26px;font-weight:600;text-align:center;margin:0 0 12px}
+p.lead{color:var(--soft);text-align:center;margin:0 auto 32px;max-width:310px;font-size:17px}
+.fld{position:relative;display:flex;align-items:center;width:100%;min-height:58px;padding:0 16px;border:2px solid var(--line);border-radius:14px;margin-bottom:24px;text-align:left}
+.fld:focus-within{border-color:var(--focus)}
+.fld>label{position:absolute;top:-11px;left:12px;padding:0 6px;background:var(--bg);font-size:13px;color:var(--soft)}
+.fld:focus-within>label{color:var(--focus)}
+.fld input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font:inherit;font-size:18px;padding:16px 0}
+.fld input::placeholder{color:#666}
+.fld .plus{font-size:18px;margin-right:2px}
+.fld input.cc{flex:none;width:3.6em}
+.fld .sep{width:1px;height:28px;background:var(--line);margin:0 12px;flex:none}
+.fld.pick{justify-content:space-between;font-size:18px;color:var(--soft)}
+.fld.pick.set{color:var(--ink)}
+input.code{text-align:center;font-size:30px!important;font-weight:600;letter-spacing:.45em;padding-left:.45em!important}
+.chk{display:flex;align-items:center;gap:14px;font-size:18px;cursor:pointer;margin-bottom:8px}
+.chk input{position:absolute;opacity:0}
+.chk span{width:38px;height:38px;border-radius:9px;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.chk input:checked+span{background:#7F8FE6;border-color:#7F8FE6}
+.chk input:checked+span::after{content:'';width:10px;height:18px;border:solid #181818;border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-2px)}
+.chk input:focus-visible+span{outline:2px solid var(--focus);outline-offset:2px}
+.fab{flex:none;align-self:flex-end;width:64px;height:64px;border-radius:50%;background:var(--acc);color:#fff;font-size:28px;display:grid;place-items:center;margin-top:12px}
+.fab:disabled{opacity:.5;cursor:default}
+.ghost{display:block;margin:0 auto;padding:12px;color:var(--focus);font-size:16px}
+.ghost:disabled{color:var(--soft);cursor:default}
+.err{color:var(--err);min-height:22px;margin:-10px 0 10px;font-size:14px}
+.hint{background:#3a3320;color:#f1dea0;border-radius:12px;padding:10px 12px;font-size:14px;margin-top:18px}
+/* список стран */
+.search{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font:inherit;font-size:18px;padding:12px 8px}
+.clist{flex:1;overflow-y:auto}
+.crow{display:flex;align-items:center;gap:14px;width:100%;padding:12px 20px;text-align:left;font-size:17px}
+.crow:hover,.crow:focus-visible{background:var(--card)}
+.crow .f{font-size:24px}.crow .n{flex:1}.crow .c{color:var(--soft)}
+/* чаты */
+.top{display:flex;align-items:center;gap:4px;padding:10px 8px;padding-top:max(10px,env(safe-area-inset-top));background:var(--card);border-bottom:1px solid #2f2f2f;flex:none}
+.top h2{margin:0 0 0 6px;font-size:20px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{background:var(--acc);color:#fff;padding:9px 16px;border-radius:20px;font-weight:600;font-size:15px}
+.list{flex:1;overflow-y:auto}
+.row{display:flex;align-items:center;gap:14px;width:100%;padding:12px 16px;text-align:left;border-bottom:1px solid #262626}
+.row:hover{background:var(--card)}
+.av{flex:none;width:48px;height:48px;border-radius:50%;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:600;font-size:18px}
+.row .t{flex:1;min-width:0}
+.row b{display:block;font-weight:600}
+.row small{display:block;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:6px}
+.b{max-width:80%;padding:8px 12px;border-radius:18px 18px 18px 4px;background:var(--bub);overflow-wrap:anywhere;white-space:pre-wrap}
+.b.me{align-self:flex-end;background:var(--acc);border-radius:18px 18px 4px 18px}
+.b small{display:block;font-size:12px;color:var(--focus)}
+.b time{display:block;font-size:11px;opacity:.65;text-align:right;margin-top:2px}
+.empty{margin:auto;color:var(--soft);text-align:center}
+.compose{display:flex;gap:8px;align-items:center;flex:none;padding:8px 10px;padding-bottom:max(8px,env(safe-area-inset-bottom));background:var(--card)}
+.compose input{flex:1;min-width:0;background:var(--bg);border:0;outline:0;color:var(--ink);font:inherit;padding:12px 16px;border-radius:24px}
+.compose button{width:46px;height:46px;border-radius:50%;background:var(--acc);color:#fff;font-size:22px}
+.pad{padding:24px}
+@media (prefers-reduced-motion:no-preference){.screen.on{animation:in .18s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+</style>
+</head>
+<body>
+<main class="app">
+
+  <section class="screen auth on" id="s-phone">
+    <div class="bar"></div>
+    <div class="main">
+      <h1>Номер телефона</h1>
+      <p class="lead">Проверьте код страны и введите свой номер телефона.</p>
+      <button class="fld pick" id="country-btn" type="button"><span id="country-label">Страна</span><span>›</span></button>
+      <div class="fld">
+        <label for="cc-in">Номер телефона</label>
+        <span class="plus">+</span>
+        <input id="cc-in" class="cc" type="tel" inputmode="numeric" maxlength="4" autocomplete="tel-country-code" aria-label="Код страны">
+        <i class="sep"></i>
+        <input id="num" type="tel" inputmode="numeric" autocomplete="tel-national" aria-label="Номер телефона">
+      </div>
+      <p class="err" id="e-phone" role="alert"></p>
+      <label class="chk"><input type="checkbox" id="sync" checked><span></span>Синхронизировать контакты</label>
+      <div class="hint" id="demo-hint" hidden>Тестовый режим: Firebase не подключён, SMS не отправляются. Код подтверждения <b>123456</b>. Чтобы SMS приходили по-настоящему, вставьте firebaseConfig в файле.</div>
+    </div>
+    <button class="fab" id="send-btn" aria-label="Получить код">→</button>
+  </section>
+
+  <section class="screen" id="s-country">
+    <div class="top"><button class="ic" id="country-back" aria-label="Назад">←</button><input class="search" id="csearch" type="search" placeholder="Поиск страны" aria-label="Поиск страны" autocomplete="off"></div>
+    <div class="clist" id="clist"></div>
+  </section>
+
+  <section class="screen auth" id="s-code">
+    <div class="bar"><button class="ic" id="back-btn" aria-label="Изменить номер">←</button></div>
+    <div class="main">
+      <h1>Введите код</h1>
+      <p class="lead" id="code-lead"></p>
+      <div class="fld"><label for="code">Код из SMS</label><input id="code" class="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······"></div>
+      <p class="err" id="e-code" role="alert"></p>
+      <button class="ghost" id="resend-btn" disabled>Отправить код ещё раз</button>
+    </div>
+    <button class="fab" id="verify-btn" aria-label="Подтвердить">→</button>
+  </section>
+
+  <section class="screen auth" id="s-name">
+    <div class="bar"></div>
+    <div class="main">
+      <h1>Как вас зовут?</h1>
+      <p class="lead">Это имя увидят ваши собеседники.</p>
+      <div class="fld"><label for="name">Имя</label><input id="name" type="text" maxlength="30" autocomplete="given-name"></div>
+      <p class="err" id="e-name" role="alert"></p>
+    </div>
+    <button class="fab" id="name-btn" aria-label="Создать аккаунт">→</button>
+  </section>
+
+  <section class="screen" id="s-list">
+    <div class="top"><h2>Чаты</h2><button class="pill" id="new-btn">Новый чат</button><button class="ic" id="logout-btn" aria-label="Выйти" title="Выйти">⎋</button></div>
+    <div class="list" id="chat-list"></div>
+  </section>
+
+  <section class="screen" id="s-new">
+    <div class="top"><button class="ic" id="new-back" aria-label="Назад">←</button><h2>Новый чат</h2></div>
+    <div class="pad">
+      <div class="fld">
+        <label for="cc2">Номер собеседника</label>
+        <span class="plus">+</span>
+        <input id="cc2" class="cc" type="tel" inputmode="numeric" maxlength="4" aria-label="Код страны">
+        <i class="sep"></i>
+        <input id="num2" type="tel" inputmode="numeric" aria-label="Номер собеседника">
+      </div>
+      <p class="err" id="e-new" role="alert"></p>
+      <p class="lead" style="margin:0 auto">Собеседник увидит чат у себя, когда вы отправите первое сообщение.</p>
+      <div style="display:flex;justify-content:flex-end"><button class="fab" id="open-btn" aria-label="Открыть чат">→</button></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-chat">
+    <div class="top"><button class="ic" id="chat-back" aria-label="Назад">←</button><h2 id="chat-title"></h2></div>
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <div class="compose">
+      <input id="msg" type="text" placeholder="Сообщение" maxlength="1000" autocomplete="off" aria-label="Сообщение">
+      <button id="send-msg" aria-label="Отправить">➤</button>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+// ===== НАСТРОЙКА FIREBASE =====
+// Пока тут стоит ВСТАВЬ_СЮДА, приложение работает в тестовом режиме (SMS не отправляются, код 123456).
+// Для настоящих SMS вставьте сюда свой конфиг из Firebase Console и выложите файл на https-хостинг.
+const firebaseConfig = {
+  apiKey: "ВСТАВЬ_СЮДА",
+  authDomain: "",
+  projectId: "",
+  appId: ""
+};
+// ==============================
+
+const DEMO = !(window.firebase && firebaseConfig.apiKey && firebaseConfig.apiKey !== "ВСТАВЬ_СЮДА");
+const $ = id => document.getElementById(id);
+const COUNTRIES = [
+['🇺🇦','Украина','380'],['🇵🇱','Польша','48'],['🇩🇪','Германия','49'],['🇬🇧','Великобритания','44'],['🇺🇸','США','1'],['🇨🇦','Канада','1'],
+['🇷🇺','Россия','7'],['🇰🇿','Казахстан','7'],['🇧🇾','Беларусь','375'],['🇲🇩','Молдова','373'],['🇬🇪','Грузия','995'],['🇦🇲','Армения','374'],
+['🇦🇿','Азербайджан','994'],['🇺🇿','Узбекистан','998'],['🇱🇹','Литва','370'],['🇱🇻','Латвия','371'],['🇪🇪','Эстония','372'],['🇨🇿','Чехия','420'],
+['🇸🇰','Словакия','421'],['🇷🇴','Румыния','40'],['🇭🇺','Венгрия','36'],['🇧🇬','Болгария','359'],['🇫🇷','Франция','33'],['🇮🇹','Италия','39'],
+['🇪🇸','Испания','34'],['🇵🇹','Португалия','351'],['🇳🇱','Нидерланды','31'],['🇧🇪','Бельгия','32'],['🇦🇹','Австрия','43'],['🇨🇭','Швейцария','41'],
+['🇸🇪','Швеция','46'],['🇳🇴','Норвегия','47'],['🇩🇰','Дания','45'],['🇫🇮','Финляндия','358'],['🇹🇷','Турция','90'],['🇮🇱','Израиль','972'],
+['🇦🇪','ОАЭ','971'],['🇦🇺','Австралия','61']
+];
+let auth, fs, confirmation, fullPhone = '', timer, me = null, unsubChat = null, unsubList = null, cur = null, lastCode = '';
+
+function store(k,v,s){const st=s?sessionStorage:localStorage;try{v===null?st.removeItem(k):st.setItem(k,JSON.stringify(v));}catch(e){}}
+function load(k,s){try{return JSON.parse((s?sessionStorage:localStorage).getItem(k));}catch(e){return null;}}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));}
+function setErr(id,m){$(id).textContent=m||'';}
+function busy(b,on){b.disabled=on;}
+function digits(s){return s.replace(/\D/g,'');}
+function readPhone(cc,num){
+  const c=digits($(cc).value),n=digits($(num).value).replace(/^0+/,'');
+  return !c||n.length<6||n.length>12?null:'+'+c+n;
+}
+function codeOf(phone){
+  const p=(phone||'').replace('+','');
+  const m=COUNTRIES.map(c=>c[2]).filter(c=>p.startsWith(c)).sort((a,b)=>b.length-a.length);
+  return m[0]||'';
+}
+function errText(e){
+  return ({
+    'auth/invalid-phone-number':'Неверный номер телефона. Проверьте цифры.',
+    'auth/too-many-requests':'Слишком много попыток. Попробуйте позже.',
+    'auth/invalid-verification-code':'Неверный код. Проверьте и введите ещё раз.',
+    'auth/code-expired':'Код устарел. Запросите новый.',
+    'auth/network-request-failed':'Нет соединения с интернетом.',
+    'auth/captcha-check-failed':'Проверка не пройдена. Обновите страницу.',
+    'auth/quota-exceeded':'Лимит SMS на сегодня исчерпан.',
+    'auth/operation-not-allowed':'В Firebase не включён вход по телефону или не разрешён этот регион.',
+    'auth/unauthorized-domain':'Домен не добавлен в Authorized domains в Firebase.'
+  })[e.code]||'Не удалось отправить код. Попробуйте ещё раз.';
+}
+
+// ===== СТРАНА =====
+function updateCountry(){
+  const c=COUNTRIES.find(x=>x[2]===digits($('cc-in').value));
+  const l=$('country-label');l.textContent=c?c[0]+' '+c[1]:'Страна';
+  $('country-btn').classList.toggle('set',!!c);
+}
+function renderCountries(q){
+  q=(q||'').trim().toLowerCase().replace('+','');
+  const box=$('clist');box.textContent='';
+  COUNTRIES.filter(c=>!q||c[1].toLowerCase().includes(q)||c[2].startsWith(q)).forEach(c=>{
+    const b=document.createElement('button');b.className='crow';
+    b.innerHTML='<span class="f"></span><span class="n"></span><span class="c"></span>';
+    b.children[0].textContent=c[0];b.children[1].textContent=c[1];b.children[2].textContent='+'+c[2];
+    b.onclick=()=>{$('cc-in').value=c[2];updateCountry();show('s-phone');$('num').focus();};
+    box.append(b);
+  });
+}
+
+// ===== ХРАНИЛИЩЕ ДАННЫХ =====
+// Firebase-режим: Firestore. chats/{id} (members, names, last, ts) и chats/{id}/messages
+const fb = {
+  chats(cb){return fs.collection('chats').where('members','array-contains',me.phone).onSnapshot(s=>cb(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});},
+  listen(id,cb){return fs.collection('chats').doc(id).collection('messages').orderBy('ts').limitToLast(200).onSnapshot(s=>cb(s.docs.map(d=>d.data())),()=>{});},
+  async send(id,m,other){
+    const ref=fs.collection('chats').doc(id);
+    if(other) await ref.set({members:[me.phone,other],last:m.text,ts:m.ts,names:{[me.phone]:me.name}},{merge:true});
+    await ref.collection('messages').add(m);
+  }
+};
+// Тестовый режим: localStorage + синхронизация между вкладками
+const subs = new Set(), bc = window.BroadcastChannel ? new BroadcastChannel('chat') : null;
+const rd = () => load('demo_db') || {};
+const ping = () => subs.forEach(f=>f());
+if(bc) bc.onmessage = ping;
+const demo = {
+  chats(cb){const f=()=>{const d=rd();cb(Object.keys(d).filter(id=>d[id].members&&d[id].members.includes(me.phone)).map(id=>({id,...d[id]})));};subs.add(f);f();return()=>subs.delete(f);},
+  listen(id,cb){const f=()=>cb((rd()[id]||{msgs:[]}).msgs);subs.add(f);f();return()=>subs.delete(f);},
+  async send(id,m,other){
+    const d=rd();const c=d[id]=d[id]||{msgs:[]};
+    if(other){c.members=[me.phone,other];c.last=m.text;c.ts=m.ts;c.names={...(c.names||{}),[me.phone]:me.name};}
+    c.msgs.push(m);store('demo_db',d);ping();if(bc)bc.postMessage(1);
+  }
+};
+const data = DEMO ? demo : fb;
+
+// ===== ВХОД =====
+function startTimer(){
+  let s=30;const b=$('resend-btn');b.disabled=true;clearInterval(timer);
+  b.textContent='Отправить ещё раз через '+s+' с';
+  timer=setInterval(()=>{
+    s--;
+    if(s<=0){clearInterval(timer);b.disabled=false;b.textContent='Отправить код ещё раз';}
+    else b.textContent='Отправить ещё раз через '+s+' с';
+  },1000);
+}
+function route(user){
+  if(user&&user.name){
+    me={phone:user.phone,name:user.name};lastCode=codeOf(me.phone);
+    if(DEMO) store('demo_session',user,true);
+    startList();show('s-list');
+  }else if(user){show('s-name');$('name').focus();}
+  else show('s-phone');
+}
+async function sendCode(){
+  setErr('e-phone');
+  const p=readPhone('cc-in','num');
+  if(!p){setErr('e-phone','Введите код страны и номер полностью.');return;}
+  fullPhone=p;const btn=$('send-btn');busy(btn,true);
+  try{
+    if(!DEMO) confirmation=await auth.signInWithPhoneNumber(fullPhone,window.verifier);
+    $('code-lead').textContent='Мы отправили SMS с кодом на '+fullPhone+'.';
+    $('code').value='';setErr('e-code');show('s-code');$('code').focus();startTimer();
+  }catch(e){
+    setErr('e-phone',errText(e));
+    if(window.grecaptcha){try{window.grecaptcha.reset(window.widgetId);}catch(_){}}
+  }
+  busy(btn,false);
+}
+async function verify(){
+  setErr('e-code');
+  const code=$('code').value.trim();
+  if(code.length!==6){setErr('e-code','Введите 6 цифр из SMS.');return;}
+  const btn=$('verify-btn');busy(btn,true);
+  try{
+    if(DEMO){
+      if(code!=='123456') throw {code:'auth/invalid-verification-code'};
+      route(load('demo_user_'+fullPhone)||{phone:fullPhone});
+    }else{
+      const r=await confirmation.confirm(code);
+      route({phone:r.user.phoneNumber,name:r.user.displayName});
+    }
+  }catch(e){setErr('e-code',errText(e));}
+  busy(btn,false);
+}
+async function saveName(){
+  setErr('e-name');
+  const name=$('name').value.trim();
+  if(name.length<2){setErr('e-name','Введите имя, минимум 2 буквы.');return;}
+  const btn=$('name-btn');busy(btn,true);
+  try{
+    if(DEMO) store('demo_user_'+fullPhone,{phone:fullPhone,name});
+    else await auth.currentUser.updateProfile({displayName:name});
+    route({phone:DEMO?fullPhone:auth.currentUser.phoneNumber,name});
+  }catch(e){setErr('e-name',errText(e));}
+  busy(btn,false);
+}
+async function logout(){
+  if(unsubList)unsubList();if(unsubChat)unsubChat();
+  me=null;cur=null;
+  if(DEMO) store('demo_session',null,true); else await auth.signOut();
+  $('num').value='';show('s-phone');
+}
+
+// ===== ЧАТЫ =====
+const dmId=(a,b)=>'dm_'+[a,b].sort().join('_');
+function startList(){if(unsubList)unsubList();unsubList=data.chats(renderList);}
+function renderList(chats){
+  const box=$('chat-list');box.textContent='';
+  const items=[{id:'general',title:'Общий чат',last:'Здесь пишут все пользователи',ts:Infinity}]
+    .concat(chats.map(c=>{
+      const other=c.members.find(p=>p!==me.phone)||me.phone;
+      return {id:c.id,title:(c.names&&c.names[other])||other,last:c.last||'',ts:c.ts||0,other};
+    }).sort((a,b)=>b.ts-a.ts));
+  items.forEach(c=>{
+    const b=document.createElement('button');b.className='row';
+    const av=document.createElement('span');av.className='av';av.textContent=(c.title.replace(/[^\p{L}\p{N}]/gu,'')[0]||'#').toUpperCase();
+    const t=document.createElement('span');t.className='t';
+    const n=document.createElement('b');n.textContent=c.title;
+    const l=document.createElement('small');l.textContent=c.last;
+    t.append(n,l);b.append(av,t);b.onclick=()=>openChat(c);box.append(b);
+  });
+}
+function openChat(c){
+  cur=c;$('chat-title').textContent=c.title;show('s-chat');
+  if(unsubChat)unsubChat();
+  unsubChat=data.listen(c.id,renderMsgs);
+  $('msg').focus();
+}
+function renderMsgs(msgs){
+  const box=$('msgs');box.textContent='';
+  if(!msgs.length){const e=document.createElement('p');e.className='empty';e.textContent='Сообщений пока нет. Напишите первое!';box.append(e);return;}
+  msgs.forEach(m=>{
+    const mine=m.from===me.phone;
+    const b=document.createElement('div');b.className='b'+(mine?' me':'');
+    if(!mine&&cur.id==='general'){const s=document.createElement('small');s.textContent=m.name||m.from;b.append(s);}
+    b.append(document.createTextNode(m.text));
+    const t=document.createElement('time');t.textContent=new Date(m.ts).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
+    b.append(t);box.append(b);
+  });
+  box.scrollTop=box.scrollHeight;
+}
+async function sendMsg(){
+  const text=$('msg').value.trim();
+  if(!text||!cur)return;
+  $('msg').value='';
+  try{await data.send(cur.id,{text,from:me.phone,name:me.name,ts:Date.now()},cur.other);}
+  catch(e){$('msg').value=text;alert('Не удалось отправить. Проверьте интернет и правила Firestore.');}
+}
+function openNew(){
+  setErr('e-new');
+  const p=readPhone('cc2','num2');
+  if(!p){setErr('e-new','Введите код страны и номер полностью.');return;}
+  if(p===me.phone){setErr('e-new','Это ваш номер. Введите номер собеседника.');return;}
+  openChat({id:dmId(me.phone,p),title:p,other:p});
+}
+
+// ===== ЗАПУСК =====
+$('send-btn').onclick=sendCode;
+$('verify-btn').onclick=verify;
+$('name-btn').onclick=saveName;
+$('logout-btn').onclick=logout;
+$('resend-btn').onclick=sendCode;
+$('back-btn').onclick=()=>{clearInterval(timer);show('s-phone');};
+$('country-btn').onclick=()=>{$('csearch').value='';renderCountries();show('s-country');$('csearch').focus();};
+$('country-back').onclick=()=>show('s-phone');
+$('csearch').addEventListener('input',e=>renderCountries(e.target.value));
+$('cc-in').addEventListener('input',e=>{e.target.value=digits(e.target.value);updateCountry();if(e.target.value.length>=3&&COUNTRIES.some(c=>c[2]===e.target.value))$('num').focus();});
+$('new-btn').onclick=()=>{$('cc2').value=lastCode;$('num2').value='';setErr('e-new');show('s-new');$('num2').focus();};
+$('new-back').onclick=()=>show('s-list');
+$('open-btn').onclick=openNew;
+$('chat-back').onclick=()=>{if(unsubChat)unsubChat();cur=null;show('s-list');};
+$('send-msg').onclick=sendMsg;
+$('msg').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg();});
+$('num').addEventListener('keydown',e=>{if(e.key==='Enter')sendCode();});
+$('num2').addEventListener('keydown',e=>{if(e.key==='Enter')openNew();});
+$('name').addEventListener('keydown',e=>{if(e.key==='Enter')saveName();});
+$('code').addEventListener('input',e=>{e.target.value=digits(e.target.value);if(e.target.value.length===6)verify();});
+
+$('cc-in').value='380';updateCountry();
+if(DEMO){
+  $('demo-hint').hidden=false;
+  const s=load('demo_session',true);if(s)route(s);
+}else{
+  firebase.initializeApp(firebaseConfig);
+  auth=firebase.auth();auth.languageCode='ru';fs=firebase.firestore();
+  window.verifier=new firebase.auth.RecaptchaVerifier('send-btn',{size:'invisible'});
+  window.verifier.render().then(id=>window.widgetId=id);
+  auth.onAuthStateChanged(u=>{if(u&&!me)route({phone:u.phoneNumber,name:u.displayName});});
+}
+</script>
+</body>
+</html>
